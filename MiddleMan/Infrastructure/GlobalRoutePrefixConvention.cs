@@ -1,0 +1,32 @@
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
+
+namespace MiddleMan.Infrastructure;
+
+public class GlobalRoutePrefixConvention(string prefix) : IApplicationModelConvention
+{
+    private readonly AttributeRouteModel _routePrefix = new(new Microsoft.AspNetCore.Mvc.RouteAttribute(prefix));
+
+    public void Apply(ApplicationModel application)
+    {
+        foreach (var controller in application.Controllers)
+        {
+            var matchedSelectors = controller.Selectors.Where(x => x.AttributeRouteModel != null).ToList();
+
+            if (matchedSelectors.Count > 0)
+            {
+                foreach (var selector in matchedSelectors)
+                {
+                    selector.AttributeRouteModel = AttributeRouteModel.CombineAttributeRouteModel(_routePrefix, selector.AttributeRouteModel);
+                }
+            }
+            else
+            {
+                controller.Selectors.Add(new SelectorModel
+                {
+                    AttributeRouteModel = _routePrefix
+                });
+            }
+        }
+    }
+}
