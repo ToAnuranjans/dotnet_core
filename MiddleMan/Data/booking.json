@@ -1,0 +1,35 @@
+{
+    "booking": {
+        "id": "BK12345",
+        "createdAt": "2026-05-29T10:30:00Z",
+        "customer": {
+            "personalInfo": {
+                "firstName": "Anuranjan",
+                "lastName": "Srivastava"
+            },
+            "contact": {
+                "email": "anuranjan@example.com",
+                "phone": "+91-9876543210"
+            }
+        },
+        "trip": {
+            "flight": {
+                "origin": {
+                    "code": "PNQ",
+                    "city": "Pune"
+                },
+                "destination": {
+                    "code": "DEL",
+                    "city": "Delhi"
+                }
+            }
+        },
+        "payment": {
+            "amount": {
+                "value": 12500,
+                "currency": "INR"
+            },
+            "status": "Paid"
+        }
+    }
+}
