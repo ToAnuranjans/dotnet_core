@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using MiddleMan.Dtos;
 
-namespace MiddleMan.CustomSerializer;
+namespace MiddleMan.CustomSerializers;
 
 public class BookingDtoConverter : JsonConverter<BookingDto>
 {

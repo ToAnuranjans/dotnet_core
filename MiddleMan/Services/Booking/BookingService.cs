@@ -1,5 +1,5 @@
 using System.Text.Json;
-using MiddleMan.CustomSerializer;
+using MiddleMan.CustomSerializers;
 using MiddleMan.Dtos;
 using MiddleMan.Services.JsonProvider;
 
