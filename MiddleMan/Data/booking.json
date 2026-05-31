@@ -30,6 +30,29 @@
                 "currency": "INR"
             },
             "status": "Paid"
-        }
+        },
+        "a":{
+            "b": {
+                "c": "Nested Value..."
+            }
+        },
+        "addresses": [
+            {
+                "street": "123 Main Street",
+                "city": "Pune",
+                "state": "Maharashtra",
+                "postalCode": "411001",
+                "country": "India",
+                "type": "Billing"
+            },
+            {
+                "street": "456 Elm Street",
+                "city": "Delhi",
+                "state": "Delhi",
+                "postalCode": "110001",
+                "country": "India",
+                "type": "Shipping"
+            }
+        ]
     }
 }

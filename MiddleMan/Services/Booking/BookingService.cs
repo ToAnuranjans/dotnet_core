@@ -1,6 +1,6 @@
 using System.Text.Json;
-using MiddleMan.CustomSerializers;
 using MiddleMan.Dtos;
+using MiddleMan.Serialization;
 using MiddleMan.Services.JsonProvider;
 
 namespace MiddleMan.Services.Booking;
@@ -12,7 +12,7 @@ public class BookingService(IJsonProviderService jsonProviderService) : IBooking
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         AllowTrailingCommas = true,
-        Converters = { new BookingDtoConverter() }
+        Converters = { new JsonPropertyPathConverterFactory() }
     };
 
     public Task<BookingDto> GetBooking()
