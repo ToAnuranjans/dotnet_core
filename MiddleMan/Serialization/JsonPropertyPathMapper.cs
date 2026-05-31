@@ -216,6 +216,16 @@ internal static class JsonPropertyPathMapper
 
     private static object? DeserializeElement(JsonElement element, Type targetType, JsonSerializerOptions options)
     {
+        var nullableType = Nullable.GetUnderlyingType(targetType);
+        var concreteType = nullableType ?? targetType;
+        if (concreteType.IsEnum && element.ValueKind == JsonValueKind.String)
+        {
+            var enumValue = element.GetString();
+            return string.IsNullOrWhiteSpace(enumValue)
+                ? null
+                : Enum.Parse(concreteType, enumValue, ignoreCase: true);
+        }
+
         return element.Deserialize(targetType, JsonPropertyPathSerializerOptions.RemoveThisFactory(options));
     }
 

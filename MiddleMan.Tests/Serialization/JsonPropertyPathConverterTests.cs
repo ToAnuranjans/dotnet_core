@@ -415,6 +415,226 @@ public class JsonPropertyPathConverterTests
     }
 
     [Fact]
+    public void Deserialize_MapsOrderPayloadWithBooleansNullableNumbersEnumsAndDateTimeOffset()
+    {
+        const string json = """
+        {
+          "order": {
+            "id": "ORD-1001",
+            "placedAt": "2026-01-15T13:45:30+05:30",
+            "status": "Paid",
+            "flags": {
+              "expedited": true
+            },
+            "discount": {
+              "percentage": 12.5
+            },
+            "customer": {
+              "tier": null
+            }
+          }
+        }
+        """;
+
+        var result = JsonSerializer.Deserialize<OrderProjection>(json, Options);
+
+        Assert.NotNull(result);
+        Assert.Equal("ORD-1001", result.OrderId);
+        Assert.Equal(DateTimeOffset.Parse("2026-01-15T13:45:30+05:30"), result.PlacedAt);
+        Assert.Equal(OrderStatus.Paid, result.Status);
+        Assert.True(result.Expedited);
+        Assert.Equal(12.5m, result.DiscountPercentage);
+        Assert.Null(result.CustomerTier);
+    }
+
+    [Fact]
+    public void Deserialize_MapsSurveyPayloadWithNestedCollectionsAndOptionalItemFields()
+    {
+        const string json = """
+        {
+          "survey": {
+            "responses": [
+              {
+                "question": {
+                  "id": "Q1",
+                  "text": "Cleanliness"
+                },
+                "answer": {
+                  "score": 5,
+                  "comment": "Excellent"
+                }
+              },
+              {
+                "question": {
+                  "id": "Q2",
+                  "text": "Queue time"
+                },
+                "answer": {
+                  "score": 3
+                }
+              }
+            ]
+          }
+        }
+        """;
+
+        var result = JsonSerializer.Deserialize<SurveyProjection>(json, Options);
+
+        Assert.NotNull(result);
+        Assert.NotNull(result.Responses);
+        Assert.Collection(
+            result.Responses,
+            response =>
+            {
+                Assert.Equal("Q1", response.QuestionId);
+                Assert.Equal("Cleanliness", response.QuestionText);
+                Assert.Equal(5, response.Score);
+                Assert.Equal("Excellent", response.Comment);
+            },
+            response =>
+            {
+                Assert.Equal("Q2", response.QuestionId);
+                Assert.Equal("Queue time", response.QuestionText);
+                Assert.Equal(3, response.Score);
+                Assert.Null(response.Comment);
+            });
+    }
+
+    [Fact]
+    public void Deserialize_MapsDictionaryOfComplexValues()
+    {
+        const string json = """
+        {
+          "inventory": {
+            "warehouses": {
+              "PNQ": {
+                "available": 10,
+                "reserved": 2
+              },
+              "DEL": {
+                "available": 7,
+                "reserved": 1
+              }
+            }
+          }
+        }
+        """;
+
+        var result = JsonSerializer.Deserialize<InventoryProjection>(json, Options);
+
+        Assert.NotNull(result);
+        Assert.NotNull(result.Warehouses);
+        Assert.Equal(10, result.Warehouses["PNQ"].Available);
+        Assert.Equal(2, result.Warehouses["PNQ"].Reserved);
+        Assert.Equal(7, result.Warehouses["DEL"].Available);
+        Assert.Equal(1, result.Warehouses["DEL"].Reserved);
+    }
+
+    [Fact]
+    public void Deserialize_MapsComplexArrayItemPath()
+    {
+        const string json = """
+        {
+          "audit": {
+            "events": [
+              {
+                "actor": {
+                  "profile": {
+                    "id": "U001",
+                    "displayName": "Anu"
+                  }
+                }
+              },
+              {
+                "actor": {
+                  "profile": {
+                    "id": "U002",
+                    "displayName": "Reviewer"
+                  }
+                }
+              }
+            ]
+          }
+        }
+        """;
+
+        var result = JsonSerializer.Deserialize<AuditProjection>(json, Options);
+
+        Assert.NotNull(result);
+        Assert.NotNull(result.Actors);
+        Assert.Collection(
+            result.Actors,
+            actor =>
+            {
+                Assert.Equal("U001", actor.Id);
+                Assert.Equal("Anu", actor.DisplayName);
+            },
+            actor =>
+            {
+                Assert.Equal("U002", actor.Id);
+                Assert.Equal("Reviewer", actor.DisplayName);
+            });
+    }
+
+    [Fact]
+    public void Deserialize_SkipsMissingOptionalArrayItemPathValues()
+    {
+        const string json = """
+        {
+          "payload": {
+            "tags": [
+              { "name": "vip" },
+              { "label": "missing-name" },
+              { "name": "priority" }
+            ]
+          }
+        }
+        """;
+
+        var result = JsonSerializer.Deserialize<PrimitiveCollectionProjection>(json, Options);
+
+        Assert.NotNull(result);
+        Assert.Equal(["vip", "priority"], result.TagNames);
+    }
+
+    [Fact]
+    public void Deserialize_ThrowsWhenRequiredArrayItemPathIsMissing()
+    {
+        const string json = """
+        {
+          "payload": {
+            "tags": [
+              { "name": "vip" },
+              { "label": "missing-name" }
+            ]
+          }
+        }
+        """;
+
+        var exception = Assert.Throws<JsonException>(() =>
+            JsonSerializer.Deserialize<RequiredCollectionProjection>(json, Options));
+
+        Assert.Contains("payload.tags[n].name", exception.Message);
+    }
+
+    [Fact]
+    public void Deserialize_IgnoresConverterFactoryForTypesWithoutPathAttributes()
+    {
+        const string json = """
+        {
+          "id": "plain-1",
+          "count": 42
+        }
+        """;
+
+        var result = JsonSerializer.Deserialize<PlainProjection>(json, Options);
+
+        Assert.NotNull(result);
+        Assert.Equal("plain-1", result.Id);
+        Assert.Equal(42, result.Count);
+    }
+
+    [Fact]
     public void Serialize_UsesNormalSystemTextJsonSerializationAndJsonPropertyName()
     {
         var value = new ScalarProjection
@@ -585,5 +805,87 @@ public class JsonPropertyPathConverterTests
     {
         [JsonPropertyName("item_type")]
         public string? Type { get; set; }
+    }
+
+    private sealed class OrderProjection
+    {
+        [JsonPropertyPath("order.id")]
+        public string? OrderId { get; set; }
+
+        [JsonPropertyPath("order.placedAt")]
+        public DateTimeOffset PlacedAt { get; set; }
+
+        [JsonPropertyPath("order.status")]
+        public OrderStatus Status { get; set; }
+
+        [JsonPropertyPath("order.flags.expedited")]
+        public bool Expedited { get; set; }
+
+        [JsonPropertyPath("order.discount.percentage")]
+        public decimal? DiscountPercentage { get; set; }
+
+        [JsonPropertyPath("order.customer.tier")]
+        public string? CustomerTier { get; set; }
+    }
+
+    private enum OrderStatus
+    {
+        Pending,
+        Paid,
+        Cancelled
+    }
+
+    private sealed class SurveyProjection
+    {
+        [JsonPropertyPath("survey.responses[n]")]
+        public List<SurveyResponseProjection>? Responses { get; set; }
+    }
+
+    private sealed class SurveyResponseProjection
+    {
+        [JsonPropertyPath("question.id")]
+        public string? QuestionId { get; set; }
+
+        [JsonPropertyPath("question.text")]
+        public string? QuestionText { get; set; }
+
+        [JsonPropertyPath("answer.score")]
+        public int Score { get; set; }
+
+        [JsonPropertyPath("answer.comment")]
+        public string? Comment { get; set; }
+    }
+
+    private sealed class InventoryProjection
+    {
+        [JsonPropertyPath("inventory.warehouses")]
+        public Dictionary<string, StockProjection>? Warehouses { get; set; }
+    }
+
+    private sealed class StockProjection
+    {
+        public int Available { get; set; }
+
+        public int Reserved { get; set; }
+    }
+
+    private sealed class AuditProjection
+    {
+        [JsonPropertyPath("audit.events[n].actor.profile")]
+        public List<ActorProjection>? Actors { get; set; }
+    }
+
+    private sealed class ActorProjection
+    {
+        public string? Id { get; set; }
+
+        public string? DisplayName { get; set; }
+    }
+
+    private sealed class PlainProjection
+    {
+        public string? Id { get; set; }
+
+        public int Count { get; set; }
     }
 }
