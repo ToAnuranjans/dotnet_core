@@ -6,9 +6,11 @@ namespace MiddleMan.Dtos;
 public class BookingDto
 {
     [JsonPropertyPath("booking.id")]
+    [JsonPropertyName("id")]
     public string? BookingId { get; set; }
 
     [JsonPropertyPath("booking.createdAt")]
+    [JsonPropertyName("createdAt")]
     public DateTime CreatedAt { get; set; }
 
     [JsonPropertyPath("booking.customer.personalInfo.firstName")]
@@ -50,6 +52,7 @@ public class BookingDto
     public List<AddressDto>? Addresses { get; set; }
 
     [JsonPropertyPath("booking.a.b.c")]
+    [JsonPropertyName("testValue")]
     public string? NestedValue { get; set; }
 }
 

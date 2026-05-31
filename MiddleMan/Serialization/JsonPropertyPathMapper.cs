@@ -142,9 +142,20 @@ internal static class JsonPropertyPathMapper
     {
         var paths = new[] { attribute.Path }.Concat(attribute.CompositeProperties);
         var values = paths
-            .Select(path => JsonPathResolver.TryResolve(primarySource, fallbackSource, path, out var valueElement)
-                ? GetElementText(valueElement)
-                : null)
+            .Select(path =>
+            {
+                if (JsonPathResolver.TryResolve(primarySource, fallbackSource, path, out var valueElement))
+                {
+                    return GetElementText(valueElement);
+                }
+
+                if (attribute.Required)
+                {
+                    throw new JsonException($"JSON property path '{path}' is missing.");
+                }
+
+                return null;
+            })
             .Where(value => !string.IsNullOrWhiteSpace(value));
 
         var joinedValue = string.Join(attribute.Separator, values);
